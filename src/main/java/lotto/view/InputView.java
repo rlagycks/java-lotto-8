@@ -7,10 +7,6 @@ import java.util.stream.Collectors;
 
 public final class InputView {
 
-    public String readLine() {
-        return Console.readLine();
-    }
-
     public String prompt(String message) {
         System.out.println(message);
         return Console.readLine();
@@ -26,6 +22,10 @@ public final class InputView {
                 .collect(Collectors.toList());
         if (nums.size() != 6) {
             throw new IllegalArgumentException("[ERROR] 당첨 번호는 쉼표(,)로 구분된 6개의 숫자여야 합니다.");
+        }
+        long distinct = nums.stream().distinct().count();
+        if (distinct != 6) {
+            throw new IllegalArgumentException("[ERROR] 당첨 번호에 중복이 있습니다.");
         }
         return nums;
     }
