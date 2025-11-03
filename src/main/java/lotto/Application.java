@@ -12,6 +12,10 @@ public class Application {
         OutputView output = new OutputView();
         LottoService service = new LottoService(new RandomsNumberPicker());
 
-        new LottoController(input, output, service).run();
+        try {
+            new LottoController(input, output, service).run();
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            System.out.println(e.getMessage());
+        }
     }
 }
