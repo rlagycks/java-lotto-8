@@ -8,9 +8,10 @@ import lotto.service.ServiceResult;
 import lotto.tickets.Tickets;
 import lotto.view.InputView;
 import lotto.view.OutputView;
-import lotto.domain.Lotto;
 
 public final class LottoController {
+    private static final int PRICE_PER_TICKET = 1_000;
+
     private final InputView input;
     private final OutputView output;
     private final LottoService service;
@@ -23,7 +24,6 @@ public final class LottoController {
 
     public void run() {
         Money amount = readAmountWithRetry();
-
         Tickets tickets = new Tickets(service.issueTickets(amount));
         output.printTickets(tickets);
 
@@ -40,14 +40,19 @@ public final class LottoController {
             try {
                 String line = input.prompt("구입금액을 입력해 주세요.");
                 long won = Long.parseLong(line.trim());
-                Money amount = Money.of(won);
-                service.issueTickets(amount);
-                return amount;
+                validatePurchaseAmount(won);
+                return Money.of(won);
+            } catch (NumberFormatException e) {
+                output.printError("[ERROR] 구입 금액은 1,000원 단위의 양수여야 합니다.");
             } catch (IllegalArgumentException e) {
                 output.printError(e.getMessage());
-            } catch (Exception e) {
-                output.printError("[ERROR] 구입 금액은 1,000원 단위의 양수여야 합니다.");
             }
+        }
+    }
+
+    private void validatePurchaseAmount(long won) {
+        if (won <= 0 || won % PRICE_PER_TICKET != 0) {
+            throw new IllegalArgumentException("[ERROR] 구입 금액은 1,000원 단위의 양수여야 합니다.");
         }
     }
 
