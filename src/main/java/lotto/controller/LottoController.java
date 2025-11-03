@@ -28,9 +28,8 @@ public final class LottoController {
         output.printTickets(tickets);
 
         List<Integer> wins = readWinningNumbersWithRetry();
-        int bonus = readBonusWithRetry();
+        WinningNumbers winning = readBonusAndBuildWinningWithRetry(wins);
 
-        WinningNumbers winning = new WinningNumbers(wins, bonus);
         ServiceResult result = service.judgeAll(tickets.asList(), winning, amount);
         output.printStatistics(result);
     }
@@ -44,7 +43,7 @@ public final class LottoController {
                 return Money.of(won);
             } catch (NumberFormatException e) {
                 output.printError("[ERROR] 구입 금액은 1,000원 단위의 양수여야 합니다.");
-            } catch (IllegalArgumentException e) {
+            } catch (IllegalArgumentException | IllegalStateException e) {
                 output.printError(e.getMessage());
             }
         }
@@ -61,20 +60,31 @@ public final class LottoController {
             try {
                 String line = input.prompt("당첨 번호를 입력해 주세요.");
                 return input.parseWinningNumbers(line);
-            } catch (IllegalArgumentException e) {
+            } catch (IllegalArgumentException | IllegalStateException e) {
                 output.printError(e.getMessage());
             }
         }
     }
 
-    private int readBonusWithRetry() {
+    private WinningNumbers readBonusAndBuildWinningWithRetry(List<Integer> wins) {
         while (true) {
             try {
                 String line = input.prompt("보너스 번호를 입력해 주세요.");
-                return input.parseBonus(line);
-            } catch (IllegalArgumentException e) {
+                int bonus = input.parseBonus(line);
+                preValidateBonus(wins, bonus);
+                return new WinningNumbers(wins, bonus);
+            } catch (IllegalArgumentException | IllegalStateException e) {
                 output.printError(e.getMessage());
             }
+        }
+    }
+
+    private void preValidateBonus(List<Integer> wins, int bonus) {
+        if (bonus < 1 || bonus > 45) {
+            throw new IllegalArgumentException("[ERROR] 보너스 번호는 1부터 45 사이의 숫자여야 합니다.");
+        }
+        if (wins.contains(bonus)) {
+            throw new IllegalArgumentException("[ERROR] 보너스 번호는 당첨 번호와 중복될 수 없습니다.");
         }
     }
 }
